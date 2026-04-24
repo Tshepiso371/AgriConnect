@@ -4,6 +4,7 @@ import 'providers/user_provider.dart';
 import 'screens/profile_screen.dart';
 import 'providers/crop_provider.dart';
 import 'screens/crop_list_screen.dart';
+import 'providers/notification_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => CropProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
         title: 'AgriConnect',

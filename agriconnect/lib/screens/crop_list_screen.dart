@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../providers/crop_provider.dart';
 import 'add_crop_screen.dart';
 import 'dart:io';
+import '../providers/notification_provider.dart';
+import 'notification_screen.dart';
+
 
 class CropListScreen extends StatelessWidget {
   const CropListScreen({super.key});
@@ -12,7 +15,22 @@ class CropListScreen extends StatelessWidget {
     final crops = Provider.of<CropProvider>(context).crops;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("My Crops")),
+      appBar: AppBar(
+        title: const Text("My Crops"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NotificationScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: ListView.builder(
         itemCount: crops.length,
         itemBuilder: (context, index) {
@@ -30,6 +48,23 @@ class CropListScreen extends StatelessWidget {
 
             title: Text(crop.name),
             subtitle: Text(crop.quantity),
+
+            trailing: ElevatedButton(
+              onPressed: () {
+                // :point_right: Simulate buyer name
+                const buyerName = "JP";
+
+                final message = "$buyerName bought ${crop.name}";
+
+                Provider.of<NotificationProvider>(context, listen: false)
+                    .addNotification(message);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Purchase successful")),
+                );
+              },
+              child: const Text("Buy"),
+            ),
           );
         },
       ),
