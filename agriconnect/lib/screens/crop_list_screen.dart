@@ -1,14 +1,27 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../screens/weather_screen.dart';
+import 'location_screen.dart';
 import '../providers/crop_provider.dart';
 import 'add_crop_screen.dart';
-import 'dart:io';
-import '../providers/notification_provider.dart';
-import 'notification_screen.dart';
 
-
-class CropListScreen extends StatelessWidget {
+class CropListScreen extends StatefulWidget {
   const CropListScreen({super.key});
+
+  @override
+  State<CropListScreen> createState() => _CropListScreenState();
+}
+
+class _CropListScreenState extends State<CropListScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CropProvider>(context, listen: false).loadCrops();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,55 +32,52 @@ class CropListScreen extends StatelessWidget {
         title: const Text("My Crops"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.cloud),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const NotificationScreen(),
+                  builder: (_) => WeatherScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.location_on),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LocationScreen(),
                 ),
               );
             },
           ),
         ],
       ),
-      body: ListView.builder(
+
+      body: crops.isEmpty
+          ? const Center(child: Text("No crops yet"))
+          : ListView.builder(
         itemCount: crops.length,
         itemBuilder: (context, index) {
           final crop = crops[index];
 
           return ListTile(
-            leading: crop.imagePath != null
-                ? Image.file(
-              File(crop.imagePath!),
+            leading: crop.imageBase64 != null
+                ? Image.memory(
+              base64Decode(crop.imageBase64!),
               width: 50,
               height: 50,
               fit: BoxFit.cover,
             )
                 : const Icon(Icons.image),
-
             title: Text(crop.name),
             subtitle: Text(crop.quantity),
-
-            trailing: ElevatedButton(
-              onPressed: () {
-                // :point_right: Simulate buyer name
-                const buyerName = "JP";
-
-                final message = "$buyerName bought ${crop.name}";
-
-                Provider.of<NotificationProvider>(context, listen: false)
-                    .addNotification(message);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Purchase successful")),
-                );
-              },
-              child: const Text("Buy"),
-            ),
           );
         },
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -81,4 +91,4 @@ class CropListScreen extends StatelessWidget {
       ),
     );
   }
-}
+  }
