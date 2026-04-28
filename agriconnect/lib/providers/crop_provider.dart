@@ -1,52 +1,68 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/crop_model.dart';
+import '../services/database_helper.dart';
 
-
-class CropProvider extends ChangeNotifier {
-
-  double? latitude;
-  double? longitude;
-
+class CropProvider with ChangeNotifier {
   List<CropModel> _crops = [];
+  double? _latitude;
+  double? _longitude;
 
   List<CropModel> get crops => _crops;
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
 
-  // Load crops from storage
   Future<void> loadCrops() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString('crops');
-
-    if (data != null) {
-      final List decoded = jsonDecode(data);
-      _crops = decoded.map((e) => CropModel.fromJson(e)).toList();
+    try {
+      _crops = await DatabaseHelper.instance.getCrops();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error loading crops: $e");
     }
-
-    notifyListeners();
   }
 
-  // Save crops
-  Future<void> saveCrops() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final encoded = jsonEncode(
-      _crops.map((e) => e.toJson()).toList(),
-    );
-
-    await prefs.setString('crops', encoded);
-  }
-
-  // Add crop
   Future<void> addCrop(CropModel crop) async {
-    _crops.add(crop);
-    await saveCrops();
-    notifyListeners();
+    try {
+      await DatabaseHelper.instance.insertCrop(crop);
+      await loadCrops();
+    } catch (e) {
+      debugPrint("Error adding crop: $e");
+    }
   }
 
   void setLocation(double lat, double lng) {
-    latitude = lat;
-    longitude = lng;
+    _latitude = lat;
+    _longitude = lng;
     notifyListeners();
   }
+
+  Future<bool> buyCrop({required CropModel crop, required int quantity}) async {
+    try {
+      int currentQty = int.tryParse(crop.quantity) ?? 0;
+      if (currentQty < quantity) return false;
+
+      int remainingQty = currentQty - quantity;
+      
+      if (remainingQty == 0) {
+        await DatabaseHelper.instance.deleteCrop(crop.name, crop.farmerEmail);
+      } else {
+        // Update quantity in DB (Assuming updateCrop exists or using delete/insert)
+        // For simplicity in this demo, we'll just delete if quantity reaches 0
+        // and for partial buys, we'd normally update. 
+        // Let's just delete for now or implement update.
+        await DatabaseHelper.instance.deleteCrop(crop.name, crop.farmerEmail);
+        await DatabaseHelper.instance.insertCrop(CropModel(
+          name: crop.name,
+          quantity: remainingQty.toString(),
+          imageBase64: crop.imageBase64,
+          farmerEmail: crop.farmerEmail,
+        ));
+      }
+
+      await loadCrops();
+      return true;
+    } catch (e) {
+      debugPrint("Error buying crop: $e");
+      return false;
+    }
   }
+}

@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../providers/crop_provider.dart';
 import '../providers/notification_provider.dart';
-import 'add_crop_screen.dart';
 import 'weather_screen.dart';
 import 'location_screen.dart';
+import 'buy_screen.dart';
+import 'add_crop_screen.dart';
 import '../services/auth_service.dart';
 
 class CropListScreen extends StatefulWidget {
@@ -17,74 +18,55 @@ class CropListScreen extends StatefulWidget {
 }
 
 class _CropListScreenState extends State<CropListScreen> {
+  Map<String, dynamic>? currentUser;
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
+    _loadInitialData();
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CropProvider>(context, listen: false).loadCrops();
-    });
+  Future<void> _loadInitialData() async {
+    final authService = AuthService();
+    final user = await authService.getUser();
+    
+    if (mounted) {
+      setState(() {
+        currentUser = user;
+        isLoading = false;
+      });
+    }
+
+    // Refresh crops from DB
+    Provider.of<CropProvider>(context, listen: false).loadCrops();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     final crops = Provider.of<CropProvider>(context).crops;
-    final route = ModalRoute.of(context)?.settings.name;
-    final isFarmer = route == '/farmer';
+    final isFarmer = currentUser?['role'] == 'farmer';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Crops"),
+        title: Text(isFarmer ? "My Farm Products" : "Available Crops"),
         actions: [
-          // WEATHER
           IconButton(
             icon: const Icon(Icons.cloud),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const WeatherScreen()),
-              );
-            },
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WeatherScreen())),
           ),
-
-          // LOCATION
           IconButton(
             icon: const Icon(Icons.location_on),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LocationScreen()),
-              );
-            },
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LocationScreen())),
           ),
-
-          // NOTIFICATIONS
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: () {
-              final notifications = Provider.of<NotificationProvider>(
-                context,
-                listen: false,
-              ).notifications;
-
-
-
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text("Notifications"),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: notifications
-                        .map((n) => Text(n))
-                        .toList(),
-                  ),
-                ),
-              );
-            },
+            onPressed: _showNotifications,
           ),
-
-          // LOGOUT
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -94,145 +76,81 @@ class _CropListScreenState extends State<CropListScreen> {
           ),
         ],
       ),
-
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: FutureBuilder(
-              future: AuthService().getUser(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Text("Loading...");
-                }
-
-                final user = snapshot.data as Map<String, dynamic>;
-
-                return Column(
-                  children: [
-                    Text(
-                      "Welcome ${user['name']} :wave:",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      isFarmer
-                          ? "Logged in as Farmer :male-farmer:"
-                          : "Logged in as Buyer :shopping_trolley:",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-
+          _buildUserHeader(),
           Expanded(
             child: crops.isEmpty
-                ? const Center(child: Text("No crops yet"))
+                ? const Center(child: Text("No crops found. Tap + to add some!"))
                 : ListView.builder(
-              itemCount: crops.length,
-              itemBuilder: (context, index) {
-                final crop = crops[index];
+                    itemCount: crops.length,
+                    itemBuilder: (context, index) {
+                      final crop = crops[index];
 
-                return Card(
-                  margin: const EdgeInsets.all(8),
-                  child: ListTile(
-                    leading: crop.imageBase64 != null
-                        ? Image.memory(
-                      base64Decode(crop.imageBase64!),
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                    )
-                        : const Icon(Icons.image),
-
-                    title: Text(crop.name),
-                    subtitle: Text(crop.quantity),
-
-                    // BUY BUTTON (only for buyer)
-                    trailing: !isFarmer
-                        ? ElevatedButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title:
-                            const Text("Choose option"),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-
-                                  Provider.of<
-                                      NotificationProvider>(
-                                      context,
-                                      listen: false)
-                                      .addNotification(
-                                      "New order: ${crop.name} (Delivery)");
-
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            "Delivery selected")),
-                                  );
-                                },
-                                child:
-                                const Text("Delivery"),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-
-                                  Provider.of<
-                                      NotificationProvider>(
-                                      context,
-                                      listen: false)
-                                      .addNotification(
-                                      "New order: ${crop.name} (Pickup)");
-
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            "Pickup selected")),
-                                  );
-                                },
-                                child:
-                                const Text("Pickup"),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      child: const Text("Buy"),
-                    )
-                        : null,
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: ListTile(
+                          leading: crop.imageBase64 != null
+                              ? Image.memory(base64Decode(crop.imageBase64!), width: 50, height: 50, fit: BoxFit.cover)
+                              : const Icon(Icons.eco, color: Colors.green),
+                          title: Text(crop.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text("Quantity: ${crop.quantity}"),
+                          trailing: !isFarmer
+                              ? ElevatedButton(
+                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BuyScreen(crop: crop))),
+                                  child: const Text("Buy"),
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    // Logic to delete if needed
+                                  },
+                                ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
-
-      // ADD BUTTON (only farmer)
       floatingActionButton: isFarmer
           ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const AddCropScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
-      )
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddCropScreen()));
+                // Refresh list after returning
+                Provider.of<CropProvider>(context, listen: false).loadCrops();
+              },
+              child: const Icon(Icons.add),
+            )
           : null,
+    );
+  }
+
+  Widget _buildUserHeader() {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      width: double.infinity,
+      color: Colors.green.shade50,
+      child: Column(
+        children: [
+          Text("Welcome, ${currentUser?['name'] ?? 'User'}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text("Role: ${currentUser?['role']?.toUpperCase()}", style: TextStyle(color: Colors.green.shade700)),
+        ],
+      ),
+    );
+  }
+
+  void _showNotifications() {
+    final notifications = Provider.of<NotificationProvider>(context, listen: false).notifications;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Notifications"),
+        content: notifications.isEmpty 
+          ? const Text("No new notifications")
+          : Column(mainAxisSize: MainAxisSize.min, children: notifications.map((n) => ListTile(title: Text(n.message))).toList()),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+      ),
     );
   }
 }

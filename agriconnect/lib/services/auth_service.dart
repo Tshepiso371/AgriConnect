@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  Future<void> signUp(String name, String email, String password, String role) async {
+  // SIGN UP
+  Future<String?> signUp(String name, String email, String password, String role) async {
     final prefs = await SharedPreferences.getInstance();
 
     final user = {
@@ -12,35 +13,59 @@ class AuthService {
       'role': role,
     };
 
-    await prefs.setString('user', jsonEncode(user));
+    final usersString = prefs.getString('users');
+    List users = [];
+
+    if (usersString != null) {
+      users = jsonDecode(usersString);
+    }
+
+    // جلوگیری duplicate email
+    for (var existingUser in users) {
+      if (existingUser['email'] == email) {
+        return "User already exists";
+      }
+    }
+
+    users.add(user);
+    await prefs.setString('users', jsonEncode(users));
+
+    return null; // success
   }
 
+  // LOGIN
   Future<Map<String, dynamic>?> login(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final userString = prefs.getString('user');
-    if (userString == null) return null;
+    final usersString = prefs.getString('users');
+    if (usersString == null) return null;
 
-    final user = jsonDecode(userString);
+    final List users = jsonDecode(usersString);
 
-    if (user['email'] == email && user['password'] == password) {
-      return user;
+    for (var user in users) {
+      if (user['email'] == email && user['password'] == password) {
+        // Save current session
+        await prefs.setString('currentUser', jsonEncode(user));
+        return user;
+      }
     }
 
     return null;
   }
 
+  // GET CURRENT USER (for session)
   Future<Map<String, dynamic>?> getUser() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final userString = prefs.getString('user');
+    final userString = prefs.getString('currentUser');
     if (userString == null) return null;
 
     return jsonDecode(userString);
   }
 
+  // LOGOUT (only removes session, NOT users)
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user');
+    await prefs.remove('currentUser');
   }
 }

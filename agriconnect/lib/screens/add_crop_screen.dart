@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../models/crop_model.dart';
 import '../providers/crop_provider.dart';
+import '../services/auth_service.dart';
 
 class AddCropScreen extends StatefulWidget {
   const AddCropScreen({super.key});
@@ -93,10 +94,20 @@ class _AddCropScreenState extends State<AddCropScreen> {
                 final base64Image =
                 _imageBytes != null ? base64Encode(_imageBytes!) : null;
 
+                final user = await AuthService().getUser();
+
+                if (user == null) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("User not found. Please log in again.")),
+                  );
+                  return;
+                }
+
                 final crop = CropModel(
                   name: nameController.text,
                   quantity: quantityController.text,
                   imageBase64: base64Image,
+                  farmerEmail: user['email'],
                 );
 
                 await Provider.of<CropProvider>(context, listen: false)

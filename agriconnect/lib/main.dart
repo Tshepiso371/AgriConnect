@@ -10,6 +10,7 @@ import 'services/auth_service.dart';
 import 'screens/signup_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -26,42 +27,38 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
+        title: 'AgriConnect',
         debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+          useMaterial3: true,
+        ),
 
-        // :white_check_mark: AUTO LOGIN LOGIC
-        home: FutureBuilder(
+        // AUTO LOGIN LOGIC
+        home: FutureBuilder<Map<String, dynamic>?>(
           future: authService.getUser(),
           builder: (context, snapshot) {
-            // Loading
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator()),
               );
             }
 
-            // No user → go to login
-            if (!snapshot.hasData) {
-              return LoginScreen();
+            // No user found or error → Login
+            if (!snapshot.hasData || snapshot.data == null) {
+              return const LoginScreen();
             }
 
-            // User exists → go to correct role
-            final user = snapshot.data as Map<String, String>;
-
-            if (user['role'] == 'farmer') {
-              return const CropListScreen();
-            } else {
-              return const CropListScreen();
-            }
+            // User exists → Crop List
+            return const CropListScreen();
           },
         ),
 
-        // :white_check_mark: KEEP ROUTES (for navigation like logout)
         routes: {
-
           '/farmer': (context) => const CropListScreen(),
           '/buyer': (context) => const CropListScreen(),
           '/signup': (context) => const SignUpScreen(),
-
+          '/login': (context) => const LoginScreen(),
         },
       ),
     );

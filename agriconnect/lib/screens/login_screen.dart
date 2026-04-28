@@ -41,8 +41,17 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: "Email")),
-            TextField(controller: passwordController, decoration: const InputDecoration(labelText: "Password")),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(labelText: "Email"),
+            ),
+            TextField(
+              controller: passwordController,
+              decoration: const InputDecoration(labelText: "Password"),
+              obscureText: true,
+            ),
+
+            const SizedBox(height: 20),
 
             ElevatedButton(
               onPressed: handleLogin,
