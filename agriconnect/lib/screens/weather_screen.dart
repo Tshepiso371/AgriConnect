@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/weather_service.dart';
 
+
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
 
@@ -26,6 +27,21 @@ class _WeatherScreenState extends State<WeatherScreen> {
     });
   }
 
+  // :white_check_mark: CORRECT PLACE FOR FUNCTION
+  String getAdvice(String condition) {
+    condition = condition.toLowerCase();
+
+    if (condition.contains("rain")) {
+      return "Good time to plant crops :seedling:";
+    } else if (condition.contains("clear")) {
+      return "Perfect for harvesting :sunny:";
+    } else if (condition.contains("cloud")) {
+      return "Monitor crops :barely_sunny:";
+    } else {
+      return "Check conditions :warning:";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,6 +57,11 @@ class _WeatherScreenState extends State<WeatherScreen> {
               style: const TextStyle(fontSize: 40),
             ),
             Text(weatherData!['weather'][0]['description']),
+            const SizedBox(height: 10),
+            Text(
+              getAdvice(weatherData!['weather'][0]['description']),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

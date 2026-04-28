@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/crop_model.dart';
 
+
 class CropProvider extends ChangeNotifier {
+
+  double? latitude;
+  double? longitude;
+
   List<CropModel> _crops = [];
 
   List<CropModel> get crops => _crops;
@@ -38,4 +43,10 @@ class CropProvider extends ChangeNotifier {
     await saveCrops();
     notifyListeners();
   }
-}
+
+  void setLocation(double lat, double lng) {
+    latitude = lat;
+    longitude = lng;
+    notifyListeners();
+  }
+  }

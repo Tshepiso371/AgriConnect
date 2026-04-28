@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+
 import '../services/location_service.dart';
+import '../providers/crop_provider.dart';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -11,6 +14,7 @@ class LocationScreen extends StatefulWidget {
 
 class _LocationScreenState extends State<LocationScreen> {
   final LocationService locationService = LocationService();
+
   Position? position;
   String error = "";
 
@@ -27,6 +31,11 @@ class _LocationScreenState extends State<LocationScreen> {
       setState(() {
         position = pos;
       });
+
+      // :white_check_mark: SAVE LOCATION
+      Provider.of<CropProvider>(context, listen: false)
+          .setLocation(pos.latitude, pos.longitude);
+
     } catch (e) {
       setState(() {
         error = e.toString();
