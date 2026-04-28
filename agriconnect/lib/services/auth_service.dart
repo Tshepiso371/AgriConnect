@@ -20,7 +20,6 @@ class AuthService {
       users = jsonDecode(usersString);
     }
 
-    // جلوگیری duplicate email
     for (var existingUser in users) {
       if (existingUser['email'] == email) {
         return "User already exists";
@@ -29,6 +28,9 @@ class AuthService {
 
     users.add(user);
     await prefs.setString('users', jsonEncode(users));
+    
+    // Automatically log in after sign up
+    await prefs.setString('currentUser', jsonEncode(user));
 
     return null; // success
   }
@@ -44,7 +46,6 @@ class AuthService {
 
     for (var user in users) {
       if (user['email'] == email && user['password'] == password) {
-        // Save current session
         await prefs.setString('currentUser', jsonEncode(user));
         return user;
       }
@@ -53,17 +54,15 @@ class AuthService {
     return null;
   }
 
-  // GET CURRENT USER (for session)
+  // GET CURRENT USER
   Future<Map<String, dynamic>?> getUser() async {
     final prefs = await SharedPreferences.getInstance();
-
     final userString = prefs.getString('currentUser');
     if (userString == null) return null;
-
     return jsonDecode(userString);
   }
 
-  // LOGOUT (only removes session, NOT users)
+  // LOGOUT
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('currentUser');

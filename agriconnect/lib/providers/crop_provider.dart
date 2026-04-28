@@ -29,6 +29,25 @@ class CropProvider with ChangeNotifier {
     }
   }
 
+  Future<void> updateCrop(CropModel oldCrop, CropModel newCrop) async {
+    try {
+      await DatabaseHelper.instance.deleteCrop(oldCrop.name, oldCrop.farmerEmail);
+      await DatabaseHelper.instance.insertCrop(newCrop);
+      await loadCrops();
+    } catch (e) {
+      debugPrint("Error updating crop: $e");
+    }
+  }
+
+  Future<void> deleteCrop(CropModel crop) async {
+    try {
+      await DatabaseHelper.instance.deleteCrop(crop.name, crop.farmerEmail);
+      await loadCrops();
+    } catch (e) {
+      debugPrint("Error deleting crop: $e");
+    }
+  }
+
   void setLocation(double lat, double lng) {
     _latitude = lat;
     _longitude = lng;
@@ -42,19 +61,16 @@ class CropProvider with ChangeNotifier {
 
       int remainingQty = currentQty - quantity;
       
-      if (remainingQty == 0) {
-        await DatabaseHelper.instance.deleteCrop(crop.name, crop.farmerEmail);
-      } else {
-        // Update quantity in DB (Assuming updateCrop exists or using delete/insert)
-        // For simplicity in this demo, we'll just delete if quantity reaches 0
-        // and for partial buys, we'd normally update. 
-        // Let's just delete for now or implement update.
-        await DatabaseHelper.instance.deleteCrop(crop.name, crop.farmerEmail);
+      await DatabaseHelper.instance.deleteCrop(crop.name, crop.farmerEmail);
+      
+      if (remainingQty > 0) {
         await DatabaseHelper.instance.insertCrop(CropModel(
           name: crop.name,
           quantity: remainingQty.toString(),
           imageBase64: crop.imageBase64,
           farmerEmail: crop.farmerEmail,
+          latitude: crop.latitude,
+          longitude: crop.longitude,
         ));
       }
 

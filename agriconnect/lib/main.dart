@@ -5,7 +5,8 @@ import 'providers/crop_provider.dart';
 import 'providers/notification_provider.dart';
 
 import 'screens/login_screen.dart';
-import 'screens/crop_list_screen.dart';
+import 'screens/farmer_dashboard.dart';
+import 'screens/buyer_dashboard.dart';
 import 'services/auth_service.dart';
 import 'screens/signup_screen.dart';
 
@@ -30,7 +31,8 @@ class MyApp extends StatelessWidget {
         title: 'AgriConnect',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.green,
+          primaryColor: Colors.green,
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
           useMaterial3: true,
         ),
 
@@ -44,19 +46,22 @@ class MyApp extends StatelessWidget {
               );
             }
 
-            // No user found or error → Login
             if (!snapshot.hasData || snapshot.data == null) {
               return const LoginScreen();
             }
 
-            // User exists → Crop List
-            return const CropListScreen();
+            final user = snapshot.data!;
+            if (user['role'] == 'farmer') {
+              return const FarmerDashboard();
+            } else {
+              return const BuyerDashboard();
+            }
           },
         ),
 
         routes: {
-          '/farmer': (context) => const CropListScreen(),
-          '/buyer': (context) => const CropListScreen(),
+          '/farmer': (context) => const FarmerDashboard(),
+          '/buyer': (context) => const BuyerDashboard(),
           '/signup': (context) => const SignUpScreen(),
           '/login': (context) => const LoginScreen(),
         },

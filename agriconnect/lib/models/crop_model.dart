@@ -3,12 +3,16 @@ class CropModel {
   final String quantity;
   final String? imageBase64;
   final String? farmerEmail;
+  final double? latitude;
+  final double? longitude;
 
   CropModel({
     required this.name,
     required this.quantity,
     this.imageBase64,
     required this.farmerEmail,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toJson() {
@@ -17,6 +21,8 @@ class CropModel {
       'quantity': quantity,
       'imageBase64': imageBase64,
       'farmerEmail': farmerEmail,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
@@ -26,6 +32,8 @@ class CropModel {
       quantity: json['quantity'],
       imageBase64: json['imageBase64'],
       farmerEmail: json['farmerEmail'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
     );
   }
 }
