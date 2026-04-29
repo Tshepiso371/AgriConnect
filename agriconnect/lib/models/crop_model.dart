@@ -5,6 +5,9 @@ class CropModel {
   final String? farmerEmail;
   final double? latitude;
   final double? longitude;
+  final double price;
+  final double rating;
+  final bool isSold;
 
   CropModel({
     required this.name,
@@ -13,6 +16,9 @@ class CropModel {
     required this.farmerEmail,
     this.latitude,
     this.longitude,
+    this.price = 0.0,
+    this.rating = 4.0,
+    this.isSold = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -23,6 +29,9 @@ class CropModel {
       'farmerEmail': farmerEmail,
       'latitude': latitude,
       'longitude': longitude,
+      'price': price,
+      'rating': rating,
+      'isSold': isSold,
     };
   }
 
@@ -32,8 +41,11 @@ class CropModel {
       quantity: json['quantity'],
       imageBase64: json['imageBase64'],
       farmerEmail: json['farmerEmail'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 4.0,
+      isSold: json['isSold'] ?? false,
     );
   }
 }

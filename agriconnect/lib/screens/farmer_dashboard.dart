@@ -102,46 +102,66 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
           Expanded(
             child: myCrops.isEmpty
                 ? const Center(child: Text("No crops yet. Start adding!"))
-                : ListView.builder(
+                : GridView.builder(
                     padding: const EdgeInsets.all(10),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, 
+                      childAspectRatio: 0.65, 
+                      crossAxisSpacing: 10, 
+                      mainAxisSpacing: 10
+                    ),
                     itemCount: myCrops.length,
                     itemBuilder: (context, index) {
                       final crop = myCrops[index];
                       return Card(
                         elevation: 3,
-                        margin: const EdgeInsets.only(bottom: 15),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (crop.imageBase64 != null)
-                              ClipRRect(
+                            Expanded(
+                              child: ClipRRect(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                                child: Image.memory(
-                                  base64Decode(crop.imageBase64!),
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            else
-                              Container(
-                                width: double.infinity,
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade100,
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                                ),
-                                child: const Icon(Icons.eco, size: 80, color: Colors.green),
+                                child: crop.imageBase64 != null
+                                    ? Image.memory(
+                                        base64Decode(crop.imageBase64!),
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        width: double.infinity,
+                                        color: Colors.green.shade100,
+                                        child: const Icon(Icons.eco, size: 50, color: Colors.green),
+                                      ),
                               ),
-                            ListTile(
-                              title: Text(crop.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                              subtitle: Text("Available Quantity: ${crop.quantity}", style: const TextStyle(fontSize: 16)),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () => _editCrop(crop)),
-                                  IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(crop)),
+                                  Text(crop.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  Text("Qty: ${crop.quantity}", style: const TextStyle(fontSize: 14)),
+                                  Text("R${crop.price}/kg", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () => _editCrop(crop),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () => _confirmDelete(crop),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -228,7 +248,10 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
   }
 
   void _editCrop(dynamic crop) {
-     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Edit feature coming soon!")));
+     Navigator.push(
+       context, 
+       MaterialPageRoute(builder: (_) => AddCropScreen(cropToEdit: crop))
+     ).then((_) => Provider.of<CropProvider>(context, listen: false).loadCrops());
   }
 
   void _confirmDelete(dynamic crop) {

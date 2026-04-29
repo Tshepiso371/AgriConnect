@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MarketService {
 
-  // GET ALL CROPS
+
   Future<List> getCrops() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('crops');
@@ -13,7 +13,7 @@ class MarketService {
     return jsonDecode(data);
   }
 
-  // BUY CROP
+
   Future<bool> buyCrop({
     required String buyerEmail,
     required String farmerEmail,
@@ -37,15 +37,15 @@ class MarketService {
           return false; // not enough stock
         }
 
-        // 🔻 REDUCE STOCK
+
         crop['quantity'] -= quantity;
       }
     }
 
-    // SAVE UPDATED CROPS
+
     await prefs.setString('crops', jsonEncode(crops));
 
-    // 📦 SAVE ORDER
+
     final ordersString = prefs.getString('orders');
     List orders = ordersString != null ? jsonDecode(ordersString) : [];
 
@@ -59,7 +59,7 @@ class MarketService {
 
     await prefs.setString('orders', jsonEncode(orders));
 
-    // 🔔 ADD NOTIFICATION
+
     final notifString = prefs.getString('notifications');
     List notifs = notifString != null ? jsonDecode(notifString) : [];
 
@@ -73,7 +73,7 @@ class MarketService {
     return true;
   }
 
-  // GET FARMER NOTIFICATIONS
+
   Future<List> getNotifications(String farmerEmail) async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('notifications');
